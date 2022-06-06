@@ -69,7 +69,7 @@ export enum CaseStatus {
     displayText: string;
     description: string; 
     example: string;
-    questionType: QuestionType;
+    questionType: string;
     key: string;
     order: number;
     active: boolean;
@@ -83,7 +83,7 @@ export enum CaseStatus {
     displayText: Map<string, string>;
     description: Map<string, string>; 
     example: Map<string, string>;
-    questionType: QuestionType;
+    questionType: string;
     key?: string;
     order: number;
     active?: boolean;

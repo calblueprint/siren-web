@@ -56,7 +56,6 @@ const Question = ({
   const [languageOption, setLanguage] = useState(
     languageOptions[languageOptions.findIndex(o => {return o.value === language})]); //  Matches initial label toggle to given backend (backend values to frontend labels).  
   const reloadLanguage = (lang) => {
-    console.log("text fields", displayText, description, answerOptions);
     setQuestionText(displayText.get(lang));
     setDescriptionText(description.get(lang));
     setAnswerOption(answerOptions.get(lang));
@@ -173,7 +172,6 @@ const Question = ({
             setQuestionText(ev.target.value);
             displayText.set(languageOption.value, ev.target.value);
             updateMap(id, "displayText", displayText);
-            console.log("display Text", displayText);
           }}
           className={styles.questionText}
         />
@@ -187,7 +185,6 @@ const Question = ({
           options={languageOptions}
           onChange={e => {
             reloadLanguage(e.value); // Reload front-end fields to new lang.
-            console.log("Disp text", displayText);
             setLanguage(e); // change current language (handled languageOption)
             updateMap(id, "language", e.value)}} // Updates backend obj map in intakeForm.
           defaultValue={languageOption} 

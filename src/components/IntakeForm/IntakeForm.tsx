@@ -1,19 +1,18 @@
-import React, { useEffect, useReducer } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
 import Link from 'next/dist/client/link';
 import styles from "./IntakeForm.module.css";
 import { IoIosArrowBack, IoIosAddCircleOutline,  } from "react-icons/io";
 import { IoEyeOutline } from "react-icons/io5";
 import { BiUndo, BiRedo } from "react-icons/bi";
-import {BsThreeDotsVertical} from "react-icons/bs";
 import Button from "../Button/Button";
-import TextareaAutosize from 'react-textarea-autosize';
 import  Question from "../Question/question";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import Image from "next/image";
 import dragDots from "../../../assets/images/dragDots.png";
 import { setQuestion, getAllQuestionsOfType, deleteQuestion} from "../../firebase/queries";
-import { firestoreAutoId, mapToJSON } from '../../firebase/helpers';
-import { AnswerType, QuestionType, QuestionComponentProps as QuestionObj, Language,  } from "../../../types";
+import { camelize, firestoreAutoId, mapToJSON } from '../../firebase/helpers';
+import { AnswerType, QuestionComponentProps as QuestionObj, Language,  } from "../../../types";
+import { useRouter } from 'next/router';
 
 
 enum IntakeActionTypes {
@@ -29,25 +28,13 @@ const deletionList = [];
 
 export const updateMap = (id, field, value) => {
   questionMap.get(id)[field] = value;
-  console.log("language change", questionMap.get(id));
 }
 
 
-const IntakeForm = (caseType) => {
-  caseType = caseType.caseType;
-  function getTitle(caseType) {
-    switch(caseType) {
-      case QuestionType.General:
-        return "General";
-      case QuestionType.Daca: 
-        return "Daca Renewal";
-      case QuestionType.Adjustment:
-        return "Adjustment Of Status";
-      default:
-        return "I90";
-    }
-  }
-  const titleText = getTitle(caseType);
+const IntakeForm = () => {
+  const router = useRouter();
+  const [titleText, setTitleText]= useState(undefined);
+  const caseType = camelize((titleText + "").toString());
   var initialState = {
     ids: [],
     questions: [],
@@ -56,16 +43,21 @@ const IntakeForm = (caseType) => {
   }
   const [qState, dispatch] = useReducer(intakeReducer, initialState);
   const loadQuestions = async (): Promise<void> => {
-    let qs: QuestionObj[] = await getAllQuestionsOfType(caseType);
+    setTitleText(router.query.key);
+    //caseType has to be loaded this way.  There is a delay in useStates where caseType variable will show up as undefined in this function.
+    let quickCaseType = camelize((router.query.key + "").toString());
+    // let qs: QuestionObj[] = await getAllQuestionsOfType(quickCaseType);
+    let qs: QuestionObj[] = await getAllQuestionsOfType(quickCaseType);
     questionMap = new Map<string, QuestionObj>();
     qs = qs.filter(q => (!deletionList.includes(q.id) && !qState.ids.includes(q.id)));
     qs.map(q => questionMap.set(q.id, q));
-    dispatch({type: IntakeActionTypes.LOAD, payload: qs})    
+    dispatch({type: IntakeActionTypes.LOAD, payload: qs})
   };
 
+  //useEffect is called twice.  At first reader & when router is ready with its query.
   useEffect(() => {
     loadQuestions();
-  }, []);
+  }, [router.isReady]);
 
   
 
@@ -233,28 +225,14 @@ const IntakeForm = (caseType) => {
     return(
       <div className={styles["overlay"]}>
           <div className={styles["namebar"]}>
-            <Link href="/">
-              <IoIosArrowBack color="#0F2536"/>
+            <Link href="/IntakeForms">
+              <IoIosArrowBack className={styles["back-arrow"]}/>
             </Link>
-            <TextareaAutosize
-              cacheMeasurements
-              value={titleText}
-              // placeholder="Untitled"
-              // onChange={ev => setTitleText(ev.target.value)}
-              className={styles["title"]}/>
+            <div className={styles["title"]}>
+              {titleText}
+            </div>
           </div>
           <div className={styles["changebar"]}>
-            <IoEyeOutline size={36} />
-            <button
-              className={styles["undo-redo"]}
-              onClick={() => dispatch({type: IntakeActionTypes.UNDO})}>
-              <BiUndo size={33}/>
-            </button>
-            <button
-              className={styles["undo-redo"]}
-              onClick={() => dispatch({type: IntakeActionTypes.REDO})}>
-              <BiRedo size={33}/>
-            </button>
             <button
               className={styles["add-button"]}
               onClick={() => {
@@ -278,19 +256,23 @@ const IntakeForm = (caseType) => {
                 }}>
               <IoIosAddCircleOutline size={33}/>
             </button>
-            <Button
-              text='Save Changes'
-              buttonType='button-clear'
-              textType='button-text-jet'
-              onPress={() => alert("SAVE!")}
-            />
+            <button
+              className={styles["undo-redo"]}
+              onClick={() => dispatch({type: IntakeActionTypes.UNDO})}>
+              <BiUndo size={33}/>
+            </button>
+            <button
+              className={styles["undo-redo"]}
+              onClick={() => dispatch({type: IntakeActionTypes.REDO})}>
+              <BiRedo size={33}/>
+            </button>
+            <IoEyeOutline size={36} />
             <Button
               text='Publish Changes'
               buttonType='button-pruss'
               textType='button-text-white'
               onPress={() => setQuestions()}
             />
-            <BsThreeDotsVertical size={30}/>
           </div>
         </div>
     )
@@ -308,6 +290,7 @@ const IntakeForm = (caseType) => {
         >
           {(droppableProvided) => (
             <div
+            key={router.query.key}
             className={styles["questions"]}
             {...droppableProvided.droppableProps}
             ref={droppableProvided.innerRef}

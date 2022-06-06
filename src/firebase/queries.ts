@@ -1,5 +1,6 @@
 import { valueToPercent } from "@mui/base";
 import { typography } from "@mui/system";
+import { useRouter } from "next/router";
 import { EventEmitter } from "stream";
 import {
     Appointment,
@@ -16,7 +17,7 @@ import {
     SirenUser
   } from '../../types';
 import firebase from './clientApp';
-import { objectToAnswerOptionsMap, objectToMap, mapToObject } from './helpers';
+import { objectToAnswerOptionsMap, objectToMap, mapToObject, firestoreAutoId, camelize } from './helpers';
 
   const database = firebase.firestore();
   const caseTypeCollection = database.collection('caseTypes');
@@ -105,13 +106,13 @@ export const getAllQuestionsOfType = async (
         target.answerOptions = objectToAnswerOptionsMap(target.answerOptions);
         i++;
       }
-      console.log("questions", questions);
       return questions;
   } catch (e) {
     console.warn(e);
     throw e;
   }
 };
+
 
 export const getClientResponsesOfType = async (
   client: Client,
@@ -232,6 +233,66 @@ export const setQuestion = async (question: Question, maps: QuestionComponentPro
         throw e;
       }
     })
+  } catch (e) {
+    console.warn(e);
+    throw e;
+    // TODO: Add error handling.
+  }
+};
+
+export const setCaseType = async (
+  caseType: string
+) => {
+  try {
+    let doc = caseTypeCollection.doc(camelize(caseType));
+    doc.get().then((d) => {
+      if (!d.exists) {
+        doc.set({
+          key: caseType,
+          documentList: [],
+          identifier: firestoreAutoId()
+        })
+      } 
+    });
+  } catch (error) {
+    console.warn(error);
+    throw error;
+  }
+}
+
+export const renameCase = async (
+  initialCaseType: string,
+  caseQueryKey: string
+) => {
+  try {
+    let initialDoc = caseTypeCollection.doc(camelize(initialCaseType));
+    let recentDoc = caseTypeCollection.doc(camelize(caseQueryKey));
+    initialDoc.get().then((doc) => {
+      initialDoc.collection('questions').get().then(c => {
+        if (c.empty || !doc || !doc.exists) {
+          return;
+        } else {
+          c.forEach(docSnapshot => {
+            recentDoc.collection('questions').add(docSnapshot.data());
+            docSnapshot.ref.delete();
+          })
+        }
+      }).then(() => {
+        var data = doc.data();
+        recentDoc.set(data, {mergeFields: ['documentList', 'identifier']}).then(() => {
+          initialDoc.delete();
+          window.location.reload();
+        })
+      })
+    })
+  } catch (error) {
+    console.warn(error);
+    throw error;
+  }}
+
+export const deleteCase = async (key: string) => {
+  try {
+    await caseTypeCollection.doc(camelize(key)).delete();
   } catch (e) {
     console.warn(e);
     throw e;

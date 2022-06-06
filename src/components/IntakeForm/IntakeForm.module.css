@@ -5,8 +5,7 @@
 
 .overlay {
   width: 100%;
-  min-width: 1440px;
-  height: 217px;
+  height: 16%;
   display: flex;
   position: fixed;
   background-color: white;
@@ -31,6 +30,13 @@
   flex-grow: 1;
 }
 
+.back-arrow {
+  margin-top: 10px;
+  margin-bottom: -5px;
+  color: var(--prussian-blue);
+  align-self: center;
+}
+
 .dragDots {
   width: 17.29px;
   height: 11px;
@@ -39,13 +45,12 @@
 
 .namebar {
   display: flex;
-  align-content: space-between;
   position: absolute;
   align-items: center;
-  top: 62px;
+  top: 45%;
   left: 91px;
-  width: 617px;
-  height: 40px;
+  width: 40%;
+  height: 50px;
   color: var(--jet);
   display: inline-block;
   font-style: normal;
@@ -69,12 +74,12 @@
 .changebar {
   position: absolute;
   display: flex;
-  right: 100px;
-  top: 62px;
-  width: 632px;
-  height: 40px;
+  right: 7%;
+  top: 65%;
+  width: 26%;
+  height: 5%;
   align-items: center;
-  justify-content: space-evenly;
+  justify-content: space-between;
   color: var(--prussian-blue);
 }
 
@@ -98,7 +103,7 @@
 
 .spacer {
   width: 100%;
-  height: 250px;
+  height: 135px;
 }
 
 .questions {
